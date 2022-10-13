@@ -1,6 +1,6 @@
 import numpy as np
 from .base import Module
-
+import scipy.special as sp
 
 class ReLU(Module):
     """
@@ -11,8 +11,7 @@ class ReLU(Module):
         :param input: array of an arbitrary size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        return np.maximum(input, 0)
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -20,8 +19,7 @@ class ReLU(Module):
         :param grad_output: array of the same size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        return grad_output * np.where(input < 0, 0, 1)
 
 
 class Sigmoid(Module):
@@ -33,8 +31,7 @@ class Sigmoid(Module):
         :param input: array of an arbitrary size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        return sp.expit(input)
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -42,8 +39,7 @@ class Sigmoid(Module):
         :param grad_output: array of the same size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        return grad_output * (sp.expit(input)) * (1 - sp.expit(input))
 
 
 class Softmax(Module):
@@ -55,8 +51,7 @@ class Softmax(Module):
         :param input: array of size (batch_size, num_classes)
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        return sp.softmax(input, axis=1)
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -64,8 +59,10 @@ class Softmax(Module):
         :param grad_output: array of the same size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        softmax = self.compute_output(input)
+
+        return np.einsum("ij,ijk->ik", grad_output,
+                         np.einsum("ij,jk -> ijk", softmax, np.eye(softmax.shape[1])) - np.einsum("ij,ik -> ijk", softmax, softmax))
 
 
 class LogSoftmax(Module):
@@ -77,8 +74,7 @@ class LogSoftmax(Module):
         :param input: array of size (batch_size, num_classes)
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_output(input)
+        return sp.log_softmax(input, axis=1)
 
     def compute_grad_input(self, input: np.array, grad_output: np.array) -> np.array:
         """
@@ -86,5 +82,8 @@ class LogSoftmax(Module):
         :param grad_output: array of the same size
         :return: array of the same size
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return super().compute_grad_input(input, grad_output)
+        softmax = sp.softmax(input, axis=1)
+        tmp1 = np.einsum('ij,ik->ijk', softmax, softmax)
+        tmp2 = np.einsum('ij,jk->ijk', softmax, np.eye(input.shape[1]))
+        dS = tmp2 - tmp1
+        return np.einsum('ijk,ik->ij', dS, grad_output / softmax)

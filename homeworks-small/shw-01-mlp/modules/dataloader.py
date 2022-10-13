@@ -1,7 +1,13 @@
+import random
+
+from sklearn.utils import shuffle as shuff
+
+
 class DataLoader(object):
     """
     Tool for shuffling data and forming mini-batches
     """
+
     def __init__(self, X, y, batch_size=1, shuffle=False):
         """
         :param X: dataset features
@@ -20,22 +26,22 @@ class DataLoader(object):
         """
         :return: number of batches per epoch
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return 0
+        return (self.X.shape[0] + self.batch_size - 1) // self.batch_size
 
     def num_samples(self) -> int:
         """
         :return: number of data samples
         """
-        # replace with your code ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
-        return 0
+        return self.X.shape[0]
 
     def __iter__(self):
         """
         Shuffle data samples if required
         :return: self
         """
-        # your code here ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
+        self.batch_id = 0
+        if self.shuffle:
+            self.X, self.y = shuff(self.X, self.y, random_state=0)
         return self
 
     def __next__(self):
@@ -43,5 +49,8 @@ class DataLoader(object):
         Form and return next data batch
         :return: (x_batch, y_batch)
         """
-        # your code here ｀、ヽ｀、ヽ(ノ＞＜)ノ ヽ｀☂｀、ヽ
+        if self.X.shape[0] - self.batch_size * self.batch_id > 0:
+            border_1, border_2 = self.batch_size * self.batch_id, self.batch_size * (1 + self.batch_id)
+            self.batch_id += 1
+            return self.X[border_1:border_2], self.y[border_1:border_2]
         raise StopIteration
